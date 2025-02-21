@@ -77,6 +77,8 @@ extension SharedStateUserDefaults {
     struct State: Equatable {
       @Presents var alert: AlertState<Action.Alert>?
       @Shared(.count) var count = 0
+
+      var hasAppeared = false
     }
 
     enum Action {
@@ -84,6 +86,9 @@ extension SharedStateUserDefaults {
       case decrementButtonTapped
       case incrementButtonTapped
       case isPrimeButtonTapped
+            
+      case onAppear
+      case publisherFired
 
       enum Alert: Equatable {}
     }
@@ -100,6 +105,16 @@ extension SharedStateUserDefaults {
 
         case .incrementButtonTapped:
           state.$count.withLock { $0 += 1 }
+          return .none
+
+        case .onAppear:
+          guard !state.hasAppeared else { return .none }
+          state.hasAppeared = true
+          return .publisher {
+            state.$count.publisher.dropFirst().map { _ in Action.publisherFired }
+          }
+          
+        case .publisherFired:
           return .none
 
         case .isPrimeButtonTapped:
