@@ -25,6 +25,10 @@ struct SharedStateUserDefaultsTests {
       SharedStateUserDefaults()
     }
 
+    let onAppearPublisherTask = await store.send(.counter(.onAppear)) {
+      $0.counter.hasAppeared = true
+    }
+    
     await store.send(.counter(.incrementButtonTapped)) {
       $0.counter.$count.withLock { $0 = 1 }
     }
@@ -36,6 +40,8 @@ struct SharedStateUserDefaultsTests {
     await store.send(.profile(.resetStatsButtonTapped)) {
       $0.profile.$count.withLock { $0 = 0 }
     }
+
+    await onAppearPublisherTask.cancel()
   }
 
   @Test
